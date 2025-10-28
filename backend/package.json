@@ -2,7 +2,7 @@
   "name": "taskai-cash-backend",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node build.js",
     "deploy": "npm run build && npm run zip",
     "zip": "cd dist && zip -r ../functions.zip .",
     "test": "jest"
