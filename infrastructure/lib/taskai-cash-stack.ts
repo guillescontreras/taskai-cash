@@ -83,43 +83,42 @@ export class TaskAICashStack extends cdk.Stack {
     // Lambda Functions
     const authFunction = new lambda.Function(this, 'AuthFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromInline(`
-        exports.handler = async (event) => {
-          return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Auth function working' })
-          };
-        };
-      `),
+      handler: 'auth/index.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
       environment: {
         USERS_TABLE: usersTable.tableName,
-        USER_POOL_ID: userPool.userPoolId,
+        BALANCES_TABLE: balancesTable.tableName,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
     });
 
     const tasksFunction = new lambda.Function(this, 'TasksFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromInline(`
-        exports.handler = async (event) => {
-          return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Tasks function working' })
-          };
-        };
-      `),
+      handler: 'tasks/index.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
       environment: {
         TASKS_TABLE: tasksTable.tableName,
         USERS_TABLE: usersTable.tableName,
+        BALANCES_TABLE: balancesTable.tableName,
+      },
+    });
+
+    const aiFunction = new lambda.Function(this, 'AIFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'ai/index.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
+      environment: {
+        TASKS_TABLE: tasksTable.tableName,
       },
     });
 
     // Grant permissions
     usersTable.grantReadWriteData(authFunction);
-    tasksTable.grantReadWriteData(tasksFunction);
-    usersTable.grantReadData(tasksFunction);
     balancesTable.grantReadWriteData(authFunction);
+    tasksTable.grantReadWriteData(tasksFunction);
+    usersTable.grantReadWriteData(tasksFunction);
+    balancesTable.grantReadWriteData(tasksFunction);
+    tasksTable.grantReadData(aiFunction);
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'TaskAIAPI', {
@@ -134,11 +133,20 @@ export class TaskAICashStack extends cdk.Stack {
 
     // API Routes
     const authResource = api.root.addResource('auth');
-    authResource.addMethod('POST', new apigateway.LambdaIntegration(authFunction));
+    authResource.addMethod('ANY', new apigateway.LambdaIntegration(authFunction));
+    const authProxy = authResource.addResource('{proxy+}');
+    authProxy.addMethod('ANY', new apigateway.LambdaIntegration(authFunction));
 
     const tasksResource = api.root.addResource('tasks');
     tasksResource.addMethod('GET', new apigateway.LambdaIntegration(tasksFunction));
     tasksResource.addMethod('POST', new apigateway.LambdaIntegration(tasksFunction));
+    const taskProxy = tasksResource.addResource('{taskId}');
+    taskProxy.addMethod('PUT', new apigateway.LambdaIntegration(tasksFunction));
+
+    const aiResource = api.root.addResource('ai');
+    aiResource.addMethod('POST', new apigateway.LambdaIntegration(aiFunction));
+    const aiProxy = aiResource.addResource('{proxy+}');
+    aiProxy.addMethod('ANY', new apigateway.LambdaIntegration(aiFunction));
 
     // SNS Topic for notifications
     const notificationsTopic = new sns.Topic(this, 'NotificationsTopic', {
