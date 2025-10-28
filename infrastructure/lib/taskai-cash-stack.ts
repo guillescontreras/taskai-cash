@@ -80,6 +80,11 @@ export class TaskAICashStack extends cdk.Stack {
       defaultRootObject: 'index.html',
     });
 
+    // SNS Topic for notifications
+    const notificationsTopic = new sns.Topic(this, 'NotificationsTopic', {
+      topicName: 'taskai-notifications',
+    });
+
     // Lambda Functions
     const authFunction = new lambda.Function(this, 'AuthFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -112,6 +117,46 @@ export class TaskAICashStack extends cdk.Stack {
       },
     });
 
+    const paymentsFunction = new lambda.Function(this, 'PaymentsFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'payments/index.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
+      environment: {
+        USERS_TABLE: usersTable.tableName,
+        BALANCES_TABLE: balancesTable.tableName,
+        STRIPE_SECRET_KEY: 'sk_test_...',
+      },
+    });
+
+    const adsFunction = new lambda.Function(this, 'AdsFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'ads/index.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
+      environment: {
+        USERS_TABLE: usersTable.tableName,
+        BALANCES_TABLE: balancesTable.tableName,
+      },
+    });
+
+    const notificationsFunction = new lambda.Function(this, 'NotificationsFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'notifications/index.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
+      environment: {
+        USERS_TABLE: usersTable.tableName,
+        NOTIFICATIONS_TOPIC_ARN: notificationsTopic.topicArn,
+      },
+    });
+
+    const analyticsFunction = new lambda.Function(this, 'AnalyticsFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'analytics/index.handler',
+      code: lambda.Code.fromAsset('../backend/dist'),
+      environment: {
+        PINPOINT_APP_ID: 'your-pinpoint-app-id',
+      },
+    });
+
     // Grant permissions
     usersTable.grantReadWriteData(authFunction);
     balancesTable.grantReadWriteData(authFunction);
@@ -119,6 +164,12 @@ export class TaskAICashStack extends cdk.Stack {
     usersTable.grantReadWriteData(tasksFunction);
     balancesTable.grantReadWriteData(tasksFunction);
     tasksTable.grantReadData(aiFunction);
+    usersTable.grantReadWriteData(paymentsFunction);
+    balancesTable.grantReadWriteData(paymentsFunction);
+    usersTable.grantReadWriteData(adsFunction);
+    balancesTable.grantReadWriteData(adsFunction);
+    usersTable.grantReadWriteData(notificationsFunction);
+    notificationsTopic.grantPublish(notificationsFunction);
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'TaskAIAPI', {
@@ -148,10 +199,23 @@ export class TaskAICashStack extends cdk.Stack {
     const aiProxy = aiResource.addResource('{proxy+}');
     aiProxy.addMethod('ANY', new apigateway.LambdaIntegration(aiFunction));
 
-    // SNS Topic for notifications
-    const notificationsTopic = new sns.Topic(this, 'NotificationsTopic', {
-      topicName: 'taskai-notifications',
-    });
+    const paymentsResource = api.root.addResource('payments');
+    paymentsResource.addMethod('ANY', new apigateway.LambdaIntegration(paymentsFunction));
+    const paymentsProxy = paymentsResource.addResource('{proxy+}');
+    paymentsProxy.addMethod('ANY', new apigateway.LambdaIntegration(paymentsFunction));
+
+    const adsResource = api.root.addResource('ads');
+    adsResource.addMethod('ANY', new apigateway.LambdaIntegration(adsFunction));
+    const adsProxy = adsResource.addResource('{proxy+}');
+    adsProxy.addMethod('ANY', new apigateway.LambdaIntegration(adsFunction));
+
+    const notificationsResource = api.root.addResource('notifications');
+    notificationsResource.addMethod('ANY', new apigateway.LambdaIntegration(notificationsFunction));
+    const notificationsProxy = notificationsResource.addResource('{proxy+}');
+    notificationsProxy.addMethod('ANY', new apigateway.LambdaIntegration(notificationsFunction));
+
+    const analyticsResource = api.root.addResource('analytics');
+    analyticsResource.addMethod('POST', new apigateway.LambdaIntegration(analyticsFunction));
 
     // Outputs
     new cdk.CfnOutput(this, 'UserPoolId', {

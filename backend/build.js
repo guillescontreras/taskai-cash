@@ -7,7 +7,11 @@ const copyNodeModules = () => {
   const destDir = path.join(__dirname, 'dist', 'node_modules');
   
   if (fs.existsSync(srcDir)) {
-    fs.cpSync(srcDir, destDir, { recursive: true });
+    // Remove existing dist/node_modules to avoid conflicts
+    if (fs.existsSync(destDir)) {
+      fs.rmSync(destDir, { recursive: true, force: true });
+    }
+    fs.cpSync(srcDir, destDir, { recursive: true, force: true });
     console.log('✅ Copied node_modules to dist/');
   }
 };
