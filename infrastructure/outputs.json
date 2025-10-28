@@ -1,0 +1,8 @@
+{
+  "ApiUrl": "https://zvc196ajpj.execute-api.us-east-1.amazonaws.com/prod/",
+  "CloudFrontUrl": "d1evw7tv861bdq.cloudfront.net",
+  "FrontendBucketName": "taskai-cash-frontend",
+  "UserPoolId": "us-east-1_VExl86ELi",
+  "UserPoolClientId": "28klhem8ac92u6j69pniaem1n9",
+  "Region": "us-east-1"
+}
