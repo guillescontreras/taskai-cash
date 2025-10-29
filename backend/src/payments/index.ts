@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { successResponse, errorResponse } from '../shared/response';
 import { dbGet, dbUpdate, TABLES } from '../shared/dynamodb';
+import { handleMercadoPagoPayout, handleMPWebhook } from './mercadopago';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const MINIMUM_PAYOUT = 500; // $5.00 in cents
@@ -21,9 +22,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     switch (path) {
       case '/payments/payout':
-        return await requestPayout(userId, body);
+        return await handleMercadoPagoPayout(userId, body);
       case '/payments/history':
         return await getPaymentHistory(userId);
+      case '/payments/webhook':
+        return await handleMPWebhook(event);
       default:
         return errorResponse('Endpoint not found', 404);
     }

@@ -6,6 +6,7 @@ import { config } from './config';
 import TaskList from './components/TaskList';
 import AITaskGenerator from './components/AITaskGenerator';
 import UserBalance from './components/UserBalance';
+import WithdrawMoney from './components/WithdrawMoney';
 import './App.css';
 
 Amplify.configure({
@@ -47,11 +48,18 @@ function App() {
             >
               🤖 Generar IA
             </button>
+            <button 
+              className={activeTab === 'withdraw' ? 'active' : ''}
+              onClick={() => setActiveTab('withdraw')}
+            >
+              💰 Retirar
+            </button>
           </nav>
 
           <main className="app-main">
             {activeTab === 'tasks' && <TaskList />}
             {activeTab === 'ai' && <AITaskGenerator />}
+            {activeTab === 'withdraw' && <WithdrawMoney />}
           </main>
 
           <footer className="app-footer">

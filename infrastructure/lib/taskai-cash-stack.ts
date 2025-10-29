@@ -124,7 +124,7 @@ export class TaskAICashStack extends cdk.Stack {
       environment: {
         USERS_TABLE: usersTable.tableName,
         BALANCES_TABLE: balancesTable.tableName,
-        STRIPE_SECRET_KEY: 'sk_test_...',
+        MP_ACCESS_TOKEN: 'TEST-6577608642489505-102823-d1a74ad9a6b5b80b45be919319582f7d-72789424',
       },
     });
 
