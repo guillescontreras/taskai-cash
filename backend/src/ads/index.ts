@@ -96,27 +96,25 @@ const rewardAdViewed = async (userId: string, body: any) => {
 
 const getAdConfig = async () => {
   try {
-    // Mock AdMob configuration
+    // Test AdMob configuration (funciona inmediatamente)
     const config = {
+      publisherId: 'ca-pub-3663587138046068',
       adUnits: {
-        banner: {
-          android: 'ca-app-pub-3940256099942544/6300978111',
-          ios: 'ca-app-pub-3940256099942544/2934735716',
-        },
-        interstitial: {
-          android: 'ca-app-pub-3940256099942544/1033173712',
-          ios: 'ca-app-pub-3940256099942544/4411468910',
-        },
-        rewarded: {
-          android: 'ca-app-pub-3940256099942544/5224354917',
-          ios: 'ca-app-pub-3940256099942544/1712485313',
-        },
+        banner: 'ca-app-pub-3940256099942544/6300978111',
+        interstitial: 'ca-app-pub-3940256099942544/1033173712',
+        rewarded: 'ca-app-pub-3940256099942544/5224354917',
       },
+      testMode: true, // Cambiar a false después de aprobación AdSense
       rewards: {
-        banner: 1,
-        interstitial: 5,
-        rewarded: 10,
-        video: 15,
+        banner: 1, // $0.01 ARS
+        interstitial: 3, // $0.03 ARS
+        rewarded: 8, // $0.08 ARS (reducido para ser más conservador)
+        video: 10, // $0.10 ARS
+      },
+      limits: {
+        dailyMaxEarnings: 500, // $5 ARS máximo por día
+        minWithdrawal: 1000, // $10 ARS mínimo para retirar
+        withdrawalFee: 50, // $0.50 ARS fee por retiro
       },
       frequency: {
         banner: 'continuous',

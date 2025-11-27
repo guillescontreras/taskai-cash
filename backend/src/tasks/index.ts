@@ -37,7 +37,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 const getUserIdFromEvent = (event: APIGatewayProxyEvent): string | null => {
   // Extract userId from JWT token in Authorization header
   const authHeader = event.headers.Authorization || event.headers.authorization;
-  if (!authHeader) return null;
+  if (!authHeader) {
+    // For demo, create a consistent user ID based on IP or use default
+    const userAgent = event.headers['User-Agent'] || event.headers['user-agent'] || '';
+    const sourceIp = event.requestContext?.identity?.sourceIp || 'unknown';
+    return `user_${Buffer.from(sourceIp + userAgent).toString('base64').slice(0, 8)}`;
+  }
   
   // For now, return a mock userId - in production, decode JWT
   return 'mock-user-id';

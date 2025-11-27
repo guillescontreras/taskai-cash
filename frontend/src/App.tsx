@@ -7,6 +7,7 @@ import TaskList from './components/TaskList';
 import AITaskGenerator from './components/AITaskGenerator';
 import UserBalance from './components/UserBalance';
 import WithdrawMoney from './components/WithdrawMoney';
+import AdBanner from './components/AdBanner';
 import './App.css';
 
 Amplify.configure({
@@ -57,7 +58,12 @@ function App() {
           </nav>
 
           <main className="app-main">
-            {activeTab === 'tasks' && <TaskList />}
+            {activeTab === 'tasks' && (
+              <>
+                <TaskList />
+                <AdBanner />
+              </>
+            )}
             {activeTab === 'ai' && <AITaskGenerator />}
             {activeTab === 'withdraw' && <WithdrawMoney />}
           </main>
